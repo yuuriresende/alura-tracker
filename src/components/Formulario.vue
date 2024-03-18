@@ -28,7 +28,7 @@ import { useStore } from 'vuex';
 import { key } from '@/store'
 import {  NOTIFICAR } from '@/store/tipo-mutacoes';
 import { TipoNotificacao } from '@/interfaces/INotificacao';
-
+import useNotificador from '@/hooks/notificador'
 export default defineComponent({
     name: 'FormularioVue',
     emits: ['aoSalvarTarefa'],
@@ -42,13 +42,9 @@ export default defineComponent({
     methods: {
         finalizarTarefa(tempoDecorrido: number): void {
             const projeto = this.projetos.find((p) => p.id == this.idProjeto);
-            if(!projeto) { // se o projeto não existe...
-                this.store.commit(NOTIFICAR, {
-                    titulo: 'Ops!',
-                    texto: "Selecione um projeto antes de finalizar a tarefa!",
-                    tipo: TipoNotificacao.FALHA,
-                }); // notificamos o usuário
-                return; // ao fazer return aqui, o restante do método salvarTarefa não será executado. chamamos essa técnica de early return :)
+            if(!projeto) { 
+                this.notificar(TipoNotificacao.FALHA, 'Ops!', 'Selecione um projeto antes de finalizar a tarefa!')
+                return; 
             }
             this.$emit('aoSalvarTarefa', { duracaoEmSegundos: tempoDecorrido, descricao: this.descricao, projeto: this.projetos.find(projeto => projeto.id == this.idProjeto) })
             this.descricao = ''
@@ -56,9 +52,11 @@ export default defineComponent({
     },
     setup() {
         const store = useStore(key)
+        const { notificar } = useNotificador()
         return {
             projetos: computed(() => store.state.projetos),
-            store
+            store,
+            notificar
         }
     }
 });
